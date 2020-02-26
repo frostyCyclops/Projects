@@ -1,0 +1,11 @@
+TODO function: move file
+TODO function: rename file
+TODO function: test if a file is a duplicate
+TODO function: read in config file
+
+
+TODO Config file integration
+TODO Google drive integration
+
+TODO how to move files in both windows and linux
+
