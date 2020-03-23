@@ -1,0 +1,16 @@
+<config>
+    <init>
+        <system>localhost</system>
+        <start_dir>/home/frost/Documents/raw_docs</start_dir>
+        <file_formats>
+            <li>pdf</li>
+            <li>ppt</li>
+            <li>xls</li>
+            <li>xlsm</li>
+            <li>xlsx</li>
+            <li>doc</li>
+            <li>docx</li>
+            <li>txt</li>
+        </file_formats>
+    </init>
+</config>
