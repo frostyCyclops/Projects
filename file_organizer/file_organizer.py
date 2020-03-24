@@ -64,18 +64,40 @@ def is_dup(search_dir, file):
 
 
 def load_init_xml(config_location):
-    """loads the configuration file for the script and sets root to init
+    """parses an xml config file into a dictionary variable
 
         Parameters:
         config_location (str): file path to config file
 
         Returns:
-            an element tree at init if successful, returns 1 on error
+            a dictionary loaded with configurable options, returns 1 on error
 
        """
 
     try:
-        return et.parse(config_location).getroot().find("init")
+        root = et.parse(config_location).getroot().find("init")
+        config = {"file_structure": {}, "file_types": {}, "scan_dir": {}}
+
+        for item in root:
+            # loads all configs that do not have sub sections
+            if not len(list(item)):
+                config[item.tag] = item.text
+
+        # loads the file structure and their file types
+        for i, item in enumerate(root.find("file_structure"), start=1):
+            name = item.find('name').text
+            config["file_structure"][i] = name
+
+            config["file_types"][name] = {}
+            for j, subsec in enumerate(item):
+                if subsec.tag == 'ext':
+                    config["file_types"][name][j] = subsec.text
+
+        # loads in all directory paths to scan
+        for i, item in enumerate(root.find("scan_dir"), start=1):
+            config["scan_dir"][i] = item.text
+
+        return config
     except:
         return 1
 
@@ -88,19 +110,13 @@ def main_logic():
         print("[!] Usage: " + sys.argv[0] + " [config file]")
         return 1
 
-    config_init = load_init_xml(sys.argv[1])
+    config = load_init_xml(sys.argv[1])
 
-    if config_init == 1:
+    if config == 1:
         print("[!] Error in config load")
         return 1
 
-    system = config_init.find("system").text
-    start_dir = config_init.find("start_dir").text
-
-    file_to_check = "pdf"
-
-    # print("[#] move_file test return: " + str(move_file(old_path, new_path)))
-    print("[#] is_dup test return: " + str(is_dup(start_dir, file_to_check)))
+    print("[#] config --> " + str(config))
 
 
 main_logic()

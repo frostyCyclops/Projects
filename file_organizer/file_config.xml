@@ -1,16 +1,38 @@
 <config>
     <init>
-        <system>localhost</system>
-        <start_dir>/home/frost/Documents/raw_docs</start_dir>
-        <file_formats>
-            <li>pdf</li>
-            <li>ppt</li>
-            <li>xls</li>
-            <li>xlsm</li>
-            <li>xlsx</li>
-            <li>doc</li>
-            <li>docx</li>
-            <li>txt</li>
-        </file_formats>
+        <system>linux</system>
+        <end_dir>/home/frost/Documents/raw_docs</end_dir>
+
+        <scan_dir>
+            <dir>/home/frost/Downloads</dir>
+        </scan_dir>
+
+        <file_structure>
+            <folder>
+                <name>pdf</name>
+                <ext>pdf</ext>
+            </folder>
+            <folder>
+                <name>excel</name>
+                <ext>xls</ext>
+                <ext>xlsm</ext>
+                <ext>xlsx</ext>
+            </folder>
+            <folder>
+                <name>word</name>
+                <ext>doc</ext>
+                <ext>docx</ext>
+                <ext>txt</ext>
+            </folder>
+            <folder>
+                <name>power_point</name>
+                <ext>ppt</ext>
+            </folder>
+            <folder>
+                <!-- Any types placed in misc is a blacklist -->
+                <name>misc</name>
+            </folder>
+        </file_structure>
+
     </init>
 </config>
