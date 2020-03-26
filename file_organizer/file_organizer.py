@@ -76,7 +76,7 @@ def load_init_xml(config_location):
 
     try:
         root = et.parse(config_location).getroot().find("init")
-        config = {"file_structure": {}, "file_types": {}, "scan_dir": {}}
+        config = {"file_types": {}}
 
         for item in root:
             # loads all configs that do not have sub sections
@@ -84,18 +84,26 @@ def load_init_xml(config_location):
                 config[item.tag] = item.text
 
         # loads the file structure and their file types
+        struct_names = []
         for i, item in enumerate(root.find("file_structure"), start=1):
-            name = item.find('name').text
-            config["file_structure"][i] = name
+            file_names = []
 
-            config["file_types"][name] = {}
+            item_name = item.find('name').text
+            struct_names.append(item_name)
+
             for j, subsec in enumerate(item):
                 if subsec.tag == 'ext':
-                    config["file_types"][name][j] = subsec.text
+                    file_names.append(subsec.text)
+            config["file_types"][item_name] = file_names
+        struct_names.sort()
+        config["file_structure"] = struct_names
 
         # loads in all directory paths to scan
+        scan_dirs = []
         for i, item in enumerate(root.find("scan_dir"), start=1):
-            config["scan_dir"][i] = item.text
+            scan_dirs.append(item.text)
+        scan_dirs.sort()
+        config["scan_dir"] = scan_dirs
 
         return config
     except:
@@ -116,7 +124,10 @@ def main_logic():
         print("[!] Error in config load")
         return 1
 
-    print("[#] config --> " + str(config))
+    return config
 
 
-main_logic()
+test = main_logic()
+
+for thing in test:
+    print(thing + ' --> ' + str(test[thing]))
