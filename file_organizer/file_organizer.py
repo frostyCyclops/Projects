@@ -1,19 +1,12 @@
 """main file for file organizer automation
 
 Example:
-    automation meant to be run on start up
+    automation to be run on start up
         $ python example_google.py /home/frost/Documents/configs/file_config.xml
 
 
 Attributes:
     config_location (str): String file path to the config file.  Writen in XML
-
-Todo:
-    * function: file tree scan
-    * function: folder scanner
-    * function: make folder
-    * create config file
-    * windows linux cross compatibility
 
 """
 
@@ -21,19 +14,20 @@ import shutil as sh
 import xml.etree.ElementTree as et
 import os
 import sys
+import time
 
 
 def move_file(old, new):
     """File mover function
 
         Parameters:
-        old (str): current file location
-        new (str): destination file location
+            old (str): current file location
+            new (str): destination file location
 
         Returns:
-        int: 0 if move is successful and 1 on error
+            int: 0 if move is successful and 1 on error
 
-       """
+    """
 
     try:
         sh.move(old, new)
@@ -48,18 +42,16 @@ def is_dup(search_dir, file):
     """checks to see if file or folder exist within a given directory
 
         Parameters:
-        search_dir (str): file path to search
-        file (str): file to check inside the given folder
+            search_dir (str): file path to search
+            file (str): file to check inside the given folder
 
         Returns:
-        int: 1 if the file or folder was found in the given directory, otherwise 0
+            int: 1 if the file or folder was found in the given directory, otherwise 0
 
-       """
-
-    with os.scandir(search_dir) as d:
-        for item in d:
-            if item.name == file:
-                return 1
+    """
+    files = get_current(search_dir)[2]
+    if len(files) and files.count(file):
+        return 1
     return 0
 
 
@@ -67,12 +59,13 @@ def load_init_xml(config_location):
     """parses an xml config file into a dictionary variable
 
         Parameters:
-        config_location (str): file path to config file
+            config_location (str): file path to config file
 
         Returns:
             a dictionary loaded with configurable options, returns 1 on error
+            config = {'system':'', 'end_dir':'', 'file_types':{'item_name':[]}, 'file_structure':[], 'scan_dir':[]}
 
-       """
+    """
 
     try:
         root = et.parse(config_location).getroot().find("init")
@@ -95,14 +88,12 @@ def load_init_xml(config_location):
                 if subsec.tag == 'ext':
                     file_names.append(subsec.text)
             config["file_types"][item_name] = file_names
-        struct_names.sort()
         config["file_structure"] = struct_names
 
         # loads in all directory paths to scan
         scan_dirs = []
         for i, item in enumerate(root.find("scan_dir"), start=1):
             scan_dirs.append(item.text)
-        scan_dirs.sort()
         config["scan_dir"] = scan_dirs
 
         return config
@@ -110,24 +101,83 @@ def load_init_xml(config_location):
         return 1
 
 
-def main_logic():
+def get_current(to_scan):
+    """takes a snapshot of the directory passed to it using os.walk()
+
+        Parameters:
+            to_scan (str): file path of the directory to be scanned
+
+        Returns:
+            a list representing the topmost level of the given directory
+            current = [[path], [folders], [files]].
+
+    """
+
+    return next(os.walk(to_scan))
+
+
+def check_folder_structure(config_st, to_scan):
+    """generates a list of folders that needs to be added and or removed to be in line with the first parameter
+
+        Parameters:
+            config_st (list[str]): a list of folders to compare the current directory with
+            to_scan (str): file path of the directory to be scanned
+
+        Returns:
+            a dictionary containing two lists of folder names
+            {'add':[], 'remove':[]}
+
+    """
+
+    current = get_current(to_scan)[1]
+
+    return {'add': list(set(config_st) - set(current)), 'remove': list(set(current) - set(config_st))}
+
+
+def check_for_files(to_scan, file_type=None):
+    """generates a list of files matching the file_type extension in the to_scan folder.
+
+        if file_type is None this function will return all files within the to_scan folder.
+
+        Parameters:
+            to_scan (str): the file path to the folder that is to be scanned for the passed file_type.
+            file_type (str): the file extension without the period to search the file for. Defaults to None.
+
+        Returns:
+            list: a list of files matching the provided file type or all the files in the folder if None is provided.
+
+    """
+
+    current = get_current(to_scan)[2]
+
+    if file_type is not None:
+        searched_files = current.copy()
+        for file in current:
+            if not file.endswith(file_type):
+                searched_files.remove(file)
+        return searched_files
+    return current
+
+
+def organizer_logic_start(config_file='file_config.xml'):
 
     print("[#] main start")
 
-    if len(sys.argv) != 2:
-        print("[!] Usage: " + sys.argv[0] + " [config file]")
-        return 1
-
-    config = load_init_xml(sys.argv[1])
+    config = load_init_xml(config_file)
 
     if config == 1:
-        print("[!] Error in config load")
-        return 1
+        print("[!] Error in config load", file=sys.stderr)
+        sys.exit(1)
+    print("[#] config loaded")
+    print("")
+    # print(check_folder_structure(config['file_structure'], config['end_dir']))
+    # print(is_dup(config['end_dir'], 'test.pdf'))
+    # print(check_for_files(config['end_dir'], 'pdf'))
 
-    return config
 
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print("[!] Usage: " + sys.argv[0] + " [config file]", file=sys.stderr)
+        sys.exit(1)
 
-test = main_logic()
-
-for thing in test:
-    print(thing + ' --> ' + str(test[thing]))
+    organizer_logic_start(sys.argv[1])
