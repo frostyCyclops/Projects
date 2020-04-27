@@ -2,6 +2,7 @@
     <init>
         <system>linux</system>
         <end_dir>/home/frost/Documents/raw_docs</end_dir>
+        <sleep_time>5</sleep_time>
 
         <scan_dir>
             <dir>/home/frost/Downloads</dir>

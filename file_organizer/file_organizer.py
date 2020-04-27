@@ -17,7 +17,7 @@ import sys
 import time
 
 
-def move_file(old, new):
+def move(old, new):
     """File mover function
 
         Parameters:
@@ -34,7 +34,7 @@ def move_file(old, new):
 
         return 0
     except:
-        print("[!] Error in move file")
+        print('[!] Error in move file')
         return 1
 
 
@@ -68,8 +68,8 @@ def load_init_xml(config_location):
     """
 
     try:
-        root = et.parse(config_location).getroot().find("init")
-        config = {"file_types": {}}
+        root = et.parse(config_location).getroot().find('init')
+        config = {'file_types': {}}
 
         for item in root:
             # loads all configs that do not have sub sections
@@ -78,7 +78,7 @@ def load_init_xml(config_location):
 
         # loads the file structure and their file types
         struct_names = []
-        for i, item in enumerate(root.find("file_structure"), start=1):
+        for i, item in enumerate(root.find('file_structure'), start=1):
             file_names = []
 
             item_name = item.find('name').text
@@ -87,14 +87,15 @@ def load_init_xml(config_location):
             for j, subsec in enumerate(item):
                 if subsec.tag == 'ext':
                     file_names.append(subsec.text)
-            config["file_types"][item_name] = file_names
-        config["file_structure"] = struct_names
+            config['file_types'][item_name] = file_names
+        config['file_structure'] = struct_names
+        config['file_structure'].sort()
 
         # loads in all directory paths to scan
         scan_dirs = []
-        for i, item in enumerate(root.find("scan_dir"), start=1):
+        for i, item in enumerate(root.find('scan_dir'), start=1):
             scan_dirs.append(item.text)
-        config["scan_dir"] = scan_dirs
+        config['scan_dir'] = scan_dirs
 
         return config
     except:
@@ -125,13 +126,15 @@ def check_folder_structure(config_st, to_scan):
 
         Returns:
             a dictionary containing two lists of folder names
-            {'add':[], 'remove':[]}
+            {'add':[], 'remove':[], 'path':''}
 
     """
 
-    current = get_current(to_scan)[1]
+    current = get_current(to_scan)
 
-    return {'add': list(set(config_st) - set(current)), 'remove': list(set(current) - set(config_st))}
+    return {'add': list(set(config_st) - set(current[1])),
+            'remove': list(set(current[1]) - set(config_st)),
+            'path': current[0]}
 
 
 def check_for_files(to_scan, file_type=None):
@@ -159,25 +162,54 @@ def check_for_files(to_scan, file_type=None):
     return current
 
 
+def folder_logic(folders):
+    print('[$] folder logic')
+
+    for folder in folders['remove']:
+        if os.stat(folder):
+            file_logic(folder, )
+
+    return 0
+
+
+def file_logic(folder_from, folder_to):
+    print('[$] file logic')
+    pass
+
+
 def organizer_logic_start(config_file='file_config.xml'):
 
-    print("[#] main start")
+    fin = True
 
     config = load_init_xml(config_file)
 
     if config == 1:
-        print("[!] Error in config load", file=sys.stderr)
+        print('[!] Error in config load', file=sys.stderr)
         sys.exit(1)
-    print("[#] config loaded")
-    print("")
-    # print(check_folder_structure(config['file_structure'], config['end_dir']))
-    # print(is_dup(config['end_dir'], 'test.pdf'))
-    # print(check_for_files(config['end_dir'], 'pdf'))
+
+    while fin:
+
+        root_folders = check_folder_structure(config['file_structure'], config['end_dir'])
+        root_files = check_for_files(config['end_dir'])
+
+        fin = False
+
+        if len(root_folders['add']) or len(root_folders['remove']):
+            folder_logic()
+        if len(root_files):
+            file_logic()
+
+        # scan each scan_dir
+            # if files found call function to move file to correct folder
+
+        time.sleep(int(config['sleep_time']))
+
+    print('[#] main loop end')
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("[!] Usage: " + sys.argv[0] + " [config file]", file=sys.stderr)
+        print('[!] Usage: ' + sys.argv[0] + ' [config file]', file=sys.stderr)
         sys.exit(1)
 
     organizer_logic_start(sys.argv[1])
